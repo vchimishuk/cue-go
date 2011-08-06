@@ -29,7 +29,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	//	"FLAGS":      parseFlags,
 	//	"INDEX":      parseIndex,
 	//	"ISRC":       parseIsrc,
-	//	"PERFORMER":  parsePerformer,
+	"PERFORMER":  {1, parsePerformer},
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
 	"REM": {-1, parseRem},
@@ -149,6 +149,25 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 
 // parsePerformer parsers PERFORMER command.
 func parsePerformer(params []string, sheet *CueSheet) os.Error {
+	performer := params[0]
+	// Limit this field length up to 80 characters.
+	maxLen := len(performer) % 80
+	performer = performer[:maxLen]
+
+	if len(sheet.Files) == 0 {
+		// Performer command for the CD disk.
+		sheet.Performer = performer
+	} else {
+		// Performer command for track.
+		// TODO:
+		// file := &(sheet.Files[len(sheet.Files) - 1])
+		// if len(file.Tracks) == 0 {
+		//   return os.NewError("PERFORMER command should ppears after a TRACK command")
+		// }
+		// track := &(file.Tracks[len(file.Tracks) -1])
+		// track.Performer = performer
+	}
+
 	return nil
 }
 

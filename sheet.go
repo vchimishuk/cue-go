@@ -4,6 +4,8 @@ package cue
 type CueSheet struct {
 	// Disc's media catalog number.
 	Catalog string
+	// Name of a perfomer for a CD-TEXT enhanced disc
+	Performer string
 	// Comments in the CUE SHEET file.
 	Comments []string
 	// Data/audio files descibed byt the cue-file.
