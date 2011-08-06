@@ -6,6 +6,8 @@ type CueSheet struct {
 	Catalog string
 	// Name of a perfomer for a CD-TEXT enhanced disc
 	Performer string
+	// Specify a title for a CD-TEXT enhanced disc.
+	Title string
 	// Comments in the CUE SHEET file.
 	Comments []string
 	// Data/audio files descibed byt the cue-file.

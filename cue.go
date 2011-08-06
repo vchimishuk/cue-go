@@ -25,16 +25,16 @@ type commandParserDescriptor struct {
 var parsersMap = map[string]commandParserDescriptor{
 	"CATALOG": {1, parseCatalog},
 	//	"CDTEXTFILE": parseCdTextFile,
-	"FILE":    {2, parseFile},
+	"FILE": {2, parseFile},
 	//	"FLAGS":      parseFlags,
 	//	"INDEX":      parseIndex,
 	//	"ISRC":       parseIsrc,
-	"PERFORMER":  {1, parsePerformer},
+	"PERFORMER": {1, parsePerformer},
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
 	"REM": {-1, parseRem},
 	//	"SONGWRITER": parseSongWriter,
-	//	"TITLE":      parseTitle, 
+	"TITLE": {1, parseTitle},
 }
 
 // Parse parses cue-sheet data (file) and returns filled CueSheet struct.
@@ -101,13 +101,13 @@ func parseCdTextFile(params []string, sheet *CueSheet) os.Error {
 // params[1] -- fileType
 func parseFile(params []string, sheet *CueSheet) os.Error {
 	// Type parser function.
-	parseFileType := func (t string) (fileType FileType, err os.Error) {
-		var types = map[string] FileType {
-			"BINARY": FileTypeBinary,
+	parseFileType := func(t string) (fileType FileType, err os.Error) {
+		var types = map[string]FileType{
+			"BINARY":   FileTypeBinary,
 			"MOTOROLA": FileTypeMotorola,
-			"AIFF": FileTypeAiff,
-			"WAVE": FileTypeWave,
-			"MP3": FileTypeMp3,
+			"AIFF":     FileTypeAiff,
+			"WAVE":     FileTypeWave,
+			"MP3":      FileTypeMp3,
 		}
 
 		fileType, ok := types[t]
@@ -149,10 +149,8 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 
 // parsePerformer parsers PERFORMER command.
 func parsePerformer(params []string, sheet *CueSheet) os.Error {
-	performer := params[0]
 	// Limit this field length up to 80 characters.
-	maxLen := len(performer) % 80
-	performer = performer[:maxLen]
+	performer := stringTruncate(params[0], 80)
 
 	if len(sheet.Files) == 0 {
 		// Performer command for the CD disk.
@@ -195,5 +193,22 @@ func parseSongWriter(params []string, sheet *CueSheet) os.Error {
 
 // parseTitle parsers TITLE command.
 func parseTitle(params []string, sheet *CueSheet) os.Error {
+	// Limit this field length up to 80 characters.
+	title := stringTruncate(params[0], 80)
+
+	if len(sheet.Files) == 0 {
+		// Title for the CD disk.
+		sheet.Title = title
+	} else {
+		// Title command for track.
+		// TODO:
+		// file := &(sheet.Files[len(sheet.Files) - 1])
+		// if len(file.Tracks) == 0 {
+		//   return os.NewError("TITLE command should ppears after a TRACK command")
+		// }
+		// track := &(file.Tracks[len(file.Tracks) -1])
+		// track.Title = title
+	}
+
 	return nil
 }

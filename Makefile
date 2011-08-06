@@ -6,6 +6,7 @@ GOFILES=\
 	cue.go\
 	sheet.go\
 	parser.go\
+	utils.go\
 
 include $(GOROOT)/src/Make.pkg
 
