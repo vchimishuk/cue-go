@@ -25,7 +25,7 @@ type commandParserDescriptor struct {
 var parsersMap = map[string]commandParserDescriptor{
 	"CATALOG": {1, parseCatalog},
 	//	"CDTEXTFILE": parseCdTextFile,
-	//	"FILE":       parseFile,
+	"FILE":    {2, parseFile},
 	//	"FLAGS":      parseFlags,
 	//	"INDEX":      parseIndex,
 	//	"ISRC":       parseIsrc,
@@ -97,7 +97,38 @@ func parseCdTextFile(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseFile parsers FILE command.
+// params[0] -- fileName
+// params[1] -- fileType
 func parseFile(params []string, sheet *CueSheet) os.Error {
+	// Type parser function.
+	parseFileType := func (t string) (fileType FileType, err os.Error) {
+		var types = map[string] FileType {
+			"BINARY": FileTypeBinary,
+			"MOTOROLA": FileTypeMotorola,
+			"AIFF": FileTypeAiff,
+			"WAVE": FileTypeWave,
+			"MP3": FileTypeMp3,
+		}
+
+		fileType, ok := types[t]
+		if !ok {
+			err = fmt.Errorf("Unknown file type %s", t)
+		}
+
+		return
+	}
+
+	fileType, err := parseFileType(params[1])
+	if err != nil {
+		return err
+	}
+
+	file := *new(File)
+	file.Name = params[0]
+	file.Type = fileType
+
+	sheet.Files = append(sheet.Files, file)
+
 	return nil
 }
 
