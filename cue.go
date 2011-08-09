@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"strconv"
 )
 
 // commandParser is the function for parsing one command.
@@ -35,6 +36,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	"REM": {-1, parseRem},
 	//	"SONGWRITER": parseSongWriter,
 	"TITLE": {1, parseTitle},
+	"TRACK": {2, parseTrack},
 }
 
 // Parse parses cue-sheet data (file) and returns filled CueSheet struct.
@@ -157,13 +159,12 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 		sheet.Performer = performer
 	} else {
 		// Performer command for track.
-		// TODO:
-		// file := &(sheet.Files[len(sheet.Files) - 1])
-		// if len(file.Tracks) == 0 {
-		//   return os.NewError("PERFORMER command should ppears after a TRACK command")
-		// }
-		// track := &(file.Tracks[len(file.Tracks) -1])
-		// track.Performer = performer
+		file := &(sheet.Files[len(sheet.Files) - 1])
+		if len(file.Tracks) == 0 {
+			return os.NewError("PERFORMER command should ppears after a TRACK command")
+		}
+		track := &(file.Tracks[len(file.Tracks) -1])
+		track.Performer = performer
 	}
 
 	return nil
@@ -201,14 +202,76 @@ func parseTitle(params []string, sheet *CueSheet) os.Error {
 		sheet.Title = title
 	} else {
 		// Title command for track.
-		// TODO:
-		// file := &(sheet.Files[len(sheet.Files) - 1])
-		// if len(file.Tracks) == 0 {
-		//   return os.NewError("TITLE command should ppears after a TRACK command")
-		// }
-		// track := &(file.Tracks[len(file.Tracks) -1])
-		// track.Title = title
+		file := &(sheet.Files[len(sheet.Files) - 1])
+		if len(file.Tracks) == 0 {
+			return os.NewError("TITLE command should ppears after a TRACK command")
+		}
+		track := &(file.Tracks[len(file.Tracks) -1])
+		track.Title = title
 	}
+
+	return nil
+}
+
+// parseTrack parses TRACK command.
+func parseTrack(params []string, sheet *CueSheet) os.Error {
+	// TRACK command should be after FILE command.
+	if len(sheet.Files) == 0 {
+		return fmt.Errorf("Unexpected TRACK command. FILE command expected first.")
+	}
+
+	numberStr := params[0]
+	dataTypeStr := params[1]
+
+	// Type parser function.
+	parseDataType := func(t string) (dataType TrackDataType, err os.Error) {
+		var types = map[string]TrackDataType{
+			"AUDIO": DataTypeAudio,
+			"CDG": DataTypeCdg,
+			"MODE1/2048": DataTypeMode1_2048,
+			"MODE1/2352": DataTypeMode1_2352,
+			"MODE2/2336": DataTypeMode2_2336,
+			"MODE2/2352": DataTypeMode2_2352,
+			"CDI/2336": DataTypeCdi_2336,
+			"CDI/2352": DataTypeCdi_2352,
+		}
+		
+		dataType, ok := types[t]
+		if !ok {
+			err = fmt.Errorf("Unknown track datatype %s", t)
+		}
+
+		return
+	}
+
+	number, err := strconv.Atoi(numberStr)
+	if err != nil {
+		return fmt.Errorf("Failed to parse track number parameter. %s", err.String()) 
+	}
+	if number < 1 {
+		return fmt.Errorf("Failed to parse track number parameter. Value should be in 1..99 range.")
+	}
+
+	dataType, err := parseDataType(dataTypeStr)
+	if err != nil {
+		return err
+	}
+
+	track := new(Track)
+	track.Number = number
+	track.DataType = dataType
+
+	file := &(sheet.Files[len(sheet.Files) - 1])
+
+	// But all track numbers after the first must be sequential.
+	if len(file.Tracks) > 0 {
+		if file.Tracks[len(file.Tracks) - 1].Number != number -1 {
+			return fmt.Errorf("Expected track number %d, but %d recieved.",
+				number - 1, number)
+		}
+	}
+
+	file.Tracks = append(file.Tracks, *track)
 
 	return nil
 }

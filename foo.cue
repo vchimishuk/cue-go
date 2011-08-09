@@ -6,3 +6,9 @@ CATALOG 1234567890123
 PERFORMER "Doro"
 TITLE "Doro"
 FILE "Doro - Doro.ape" WAVE
+  TRACK 01 AUDIO
+    TITLE "Unholy Love"
+    PERFORMER "Doro"
+  TRACK 02 AUDIO
+    TITLE "I Had Too Much to Dream"
+    PERFORMER "Doro"

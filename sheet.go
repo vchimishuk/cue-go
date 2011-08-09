@@ -30,10 +30,45 @@ const (
 	FileTypeMp3
 )
 
+// Track datatype.
+type TrackDataType int
+
+const (
+	// AUDIO – Audio/Music (2352)
+	DataTypeAudio = iota
+	// CDG – Karaoke CD+G (2448)
+	DataTypeCdg
+	// MODE1/2048 – CDROM Mode1 Data (cooked)
+	DataTypeMode1_2048
+	// MODE1/2352 – CDROM Mode1 Data (raw)
+	DataTypeMode1_2352
+	// MODE2/2336 – CDROM-XA Mode2 Data
+	DataTypeMode2_2336
+	// MODE2/2352 – CDROM-XA Mode2 Data
+	DataTypeMode2_2352
+	// CDI/2336 – CDI Mode2 Data
+	DataTypeCdi_2336
+	// CDI/2352 – CDI Mode2 Data
+	DataTypeCdi_2352
+)
+
+type Track struct {
+	// Track number (1-99).
+	Number int
+	// Track datatype.
+	DataType TrackDataType
+	// Track title.
+	Title string
+	// Track preformer.
+	Performer string
+}
+
 // Audio file representation structure.
 type File struct {
 	// Name (path) of the file.
 	Name string
 	// Type of the audio file.
 	Type FileType
+	// List of present tracks in the file.
+	Tracks []Track
 }
