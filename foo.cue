@@ -13,3 +13,4 @@ FILE "Doro - Doro.ape" WAVE
   TRACK 02 AUDIO
     TITLE "I Had Too Much to Dream"
     PERFORMER "Doro"
+    FLAGS 4CH PRE DCP SCMS

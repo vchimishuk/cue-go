@@ -27,7 +27,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	"CATALOG": {1, parseCatalog},
 	"CDTEXTFILE": {1, parseCdTextFile},
 	"FILE": {2, parseFile},
-	//	"FLAGS":      parseFlags,
+	"FLAGS": {-1, parseFlags},
 	//	"INDEX":      parseIndex,
 	//	"ISRC":       parseIsrc,
 	"PERFORMER": {1, parsePerformer},
@@ -138,6 +138,43 @@ func parseFile(params []string, sheet *CueSheet) os.Error {
 
 // parseFlags parsers FLAGS command.
 func parseFlags(params []string, sheet *CueSheet) os.Error {
+	flagParser := func (flag string) (trackFlag TrackFlag, err os.Error) {
+		var flags = map[string] TrackFlag {
+			"DCP": TrackFlagDcp,
+			"4CH": TrackFlag4ch,
+			"PRE": TrackFlagPre,
+			"SCMS": TrackFlagScms,
+		}
+
+		trackFlag, ok := flags[flag]
+		if !ok {
+			err = fmt.Errorf("Unknown track flag %s", flag)
+		}
+
+		return
+	}
+
+	trackNotFound := os.NewError("TRACK command should appears before FLAGS command")
+
+	if len(sheet.Files) == 0 {
+		return trackNotFound
+	}
+
+	file := &(sheet.Files[len(sheet.Files) - 1])
+	if len(file.Tracks) == 0 {
+		return trackNotFound
+	}
+
+	track := &(file.Tracks[len(file.Tracks) -1])
+	
+	for _, flagStr := range params {
+		flag, err := flagParser(flagStr)
+		if err != nil {
+			return err
+		}
+		track.Flags = append(track.Flags, flag)
+	}
+
 	return nil
 }
 
@@ -163,7 +200,7 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 		// Performer command for track.
 		file := &(sheet.Files[len(sheet.Files) - 1])
 		if len(file.Tracks) == 0 {
-			return os.NewError("PERFORMER command should ppears after a TRACK command")
+			return os.NewError("PERFORMER command should appears after a TRACK command")
 		}
 		track := &(file.Tracks[len(file.Tracks) -1])
 		track.Performer = performer
@@ -206,7 +243,7 @@ func parseTitle(params []string, sheet *CueSheet) os.Error {
 		// Title command for track.
 		file := &(sheet.Files[len(sheet.Files) - 1])
 		if len(file.Tracks) == 0 {
-			return os.NewError("TITLE command should ppears after a TRACK command")
+			return os.NewError("TITLE command should appears after a TRACK command")
 		}
 		track := &(file.Tracks[len(file.Tracks) -1])
 		track.Title = title

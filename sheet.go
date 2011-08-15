@@ -54,6 +54,20 @@ const (
 	DataTypeCdi_2352
 )
 
+// Additional decode information about track.
+type TrackFlag int
+
+const (
+	// Digital copy permitted.
+	TrackFlagDcp = iota
+	// Four channel audio.
+	TrackFlag4ch
+	// Pre-emphasis enabled (audio tracks only).
+	TrackFlagPre
+	// Serial copy management system (not supported by all recorders).
+	TrackFlagScms	
+)
+
 type Track struct {
 	// Track number (1-99).
 	Number int
@@ -63,6 +77,8 @@ type Track struct {
 	Title string
 	// Track preformer.
 	Performer string
+	// Track decode flags.
+	Flags []TrackFlag
 }
 
 // Audio file representation structure.
