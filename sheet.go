@@ -10,6 +10,8 @@ type CueSheet struct {
 	Title string
 	// Comments in the CUE SHEET file.
 	Comments []string
+	// Name of the file that contains the encoded CD-TEXT information for the disc.
+	CdTextFile string
 	// Data/audio files descibed byt the cue-file.
 	Files []File
 }

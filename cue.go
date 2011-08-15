@@ -25,7 +25,7 @@ type commandParserDescriptor struct {
 // parsersMap used for commands and parser functions correspondence.
 var parsersMap = map[string]commandParserDescriptor{
 	"CATALOG": {1, parseCatalog},
-	//	"CDTEXTFILE": parseCdTextFile,
+	"CDTEXTFILE": {1, parseCdTextFile},
 	"FILE": {2, parseFile},
 	//	"FLAGS":      parseFlags,
 	//	"INDEX":      parseIndex,
@@ -95,6 +95,8 @@ func parseCatalog(params []string, sheet *CueSheet) os.Error {
 
 // parseCdTextFile parsers CDTEXTFILE command.
 func parseCdTextFile(params []string, sheet *CueSheet) os.Error {
+	sheet.CdTextFile = params[0]
+
 	return nil
 }
 
