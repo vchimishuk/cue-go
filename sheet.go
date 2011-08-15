@@ -65,7 +65,7 @@ const (
 	// Pre-emphasis enabled (audio tracks only).
 	TrackFlagPre
 	// Serial copy management system (not supported by all recorders).
-	TrackFlagScms	
+	TrackFlagScms
 )
 
 type Track struct {

@@ -24,10 +24,10 @@ type commandParserDescriptor struct {
 
 // parsersMap used for commands and parser functions correspondence.
 var parsersMap = map[string]commandParserDescriptor{
-	"CATALOG": {1, parseCatalog},
+	"CATALOG":    {1, parseCatalog},
 	"CDTEXTFILE": {1, parseCdTextFile},
-	"FILE": {2, parseFile},
-	"FLAGS": {-1, parseFlags},
+	"FILE":       {2, parseFile},
+	"FLAGS":      {-1, parseFlags},
 	//	"INDEX":      parseIndex,
 	//	"ISRC":       parseIsrc,
 	"PERFORMER": {1, parsePerformer},
@@ -51,7 +51,14 @@ func Parse(reader io.Reader) (sheet *CueSheet, err os.Error) {
 			return nil, err
 		}
 
-		cmd, params, err := parseCommand(string(buf))
+		line := strings.TrimSpace(string(buf))
+
+		// Skip empty lines.
+		if len(line) == 0 {
+			continue
+		}
+
+		cmd, params, err := parseCommand(line)
 		if err != nil {
 			return nil, fmt.Errorf("Line %d. %s", err.String())
 		}
@@ -138,11 +145,11 @@ func parseFile(params []string, sheet *CueSheet) os.Error {
 
 // parseFlags parsers FLAGS command.
 func parseFlags(params []string, sheet *CueSheet) os.Error {
-	flagParser := func (flag string) (trackFlag TrackFlag, err os.Error) {
-		var flags = map[string] TrackFlag {
-			"DCP": TrackFlagDcp,
-			"4CH": TrackFlag4ch,
-			"PRE": TrackFlagPre,
+	flagParser := func(flag string) (trackFlag TrackFlag, err os.Error) {
+		var flags = map[string]TrackFlag{
+			"DCP":  TrackFlagDcp,
+			"4CH":  TrackFlag4ch,
+			"PRE":  TrackFlagPre,
 			"SCMS": TrackFlagScms,
 		}
 
@@ -160,13 +167,13 @@ func parseFlags(params []string, sheet *CueSheet) os.Error {
 		return trackNotFound
 	}
 
-	file := &(sheet.Files[len(sheet.Files) - 1])
+	file := &(sheet.Files[len(sheet.Files)-1])
 	if len(file.Tracks) == 0 {
 		return trackNotFound
 	}
 
-	track := &(file.Tracks[len(file.Tracks) -1])
-	
+	track := &(file.Tracks[len(file.Tracks)-1])
+
 	for _, flagStr := range params {
 		flag, err := flagParser(flagStr)
 		if err != nil {
@@ -198,11 +205,11 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 		sheet.Performer = performer
 	} else {
 		// Performer command for track.
-		file := &(sheet.Files[len(sheet.Files) - 1])
+		file := &(sheet.Files[len(sheet.Files)-1])
 		if len(file.Tracks) == 0 {
 			return os.NewError("PERFORMER command should appears after a TRACK command")
 		}
-		track := &(file.Tracks[len(file.Tracks) -1])
+		track := &(file.Tracks[len(file.Tracks)-1])
 		track.Performer = performer
 	}
 
@@ -241,11 +248,11 @@ func parseTitle(params []string, sheet *CueSheet) os.Error {
 		sheet.Title = title
 	} else {
 		// Title command for track.
-		file := &(sheet.Files[len(sheet.Files) - 1])
+		file := &(sheet.Files[len(sheet.Files)-1])
 		if len(file.Tracks) == 0 {
 			return os.NewError("TITLE command should appears after a TRACK command")
 		}
-		track := &(file.Tracks[len(file.Tracks) -1])
+		track := &(file.Tracks[len(file.Tracks)-1])
 		track.Title = title
 	}
 
@@ -265,16 +272,16 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 	// Type parser function.
 	parseDataType := func(t string) (dataType TrackDataType, err os.Error) {
 		var types = map[string]TrackDataType{
-			"AUDIO": DataTypeAudio,
-			"CDG": DataTypeCdg,
+			"AUDIO":      DataTypeAudio,
+			"CDG":        DataTypeCdg,
 			"MODE1/2048": DataTypeMode1_2048,
 			"MODE1/2352": DataTypeMode1_2352,
 			"MODE2/2336": DataTypeMode2_2336,
 			"MODE2/2352": DataTypeMode2_2352,
-			"CDI/2336": DataTypeCdi_2336,
-			"CDI/2352": DataTypeCdi_2352,
+			"CDI/2336":   DataTypeCdi_2336,
+			"CDI/2352":   DataTypeCdi_2352,
 		}
-		
+
 		dataType, ok := types[t]
 		if !ok {
 			err = fmt.Errorf("Unknown track datatype %s", t)
@@ -285,7 +292,7 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 
 	number, err := strconv.Atoi(numberStr)
 	if err != nil {
-		return fmt.Errorf("Failed to parse track number parameter. %s", err.String()) 
+		return fmt.Errorf("Failed to parse track number parameter. %s", err.String())
 	}
 	if number < 1 {
 		return fmt.Errorf("Failed to parse track number parameter. Value should be in 1..99 range.")
@@ -300,13 +307,13 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 	track.Number = number
 	track.DataType = dataType
 
-	file := &(sheet.Files[len(sheet.Files) - 1])
+	file := &(sheet.Files[len(sheet.Files)-1])
 
 	// But all track numbers after the first must be sequential.
 	if len(file.Tracks) > 0 {
-		if file.Tracks[len(file.Tracks) - 1].Number != number -1 {
+		if file.Tracks[len(file.Tracks)-1].Number != number-1 {
 			return fmt.Errorf("Expected track number %d, but %d recieved.",
-				number - 1, number)
+				number-1, number)
 		}
 	}
 
