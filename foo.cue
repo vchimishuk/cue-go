@@ -17,3 +17,4 @@ FILE "Doro - Doro.ape" WAVE
     FLAGS 4CH PRE DCP SCMS
   TRACK 03 AUDIO
     SONGWRITER "Songwriter for the track"
+    ISRC ABCDE1234567

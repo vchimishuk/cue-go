@@ -29,7 +29,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	"FILE":       {2, parseFile},
 	"FLAGS":      {-1, parseFlags},
 	//	"INDEX":      parseIndex,
-	//	"ISRC":       parseIsrc,
+	"ISRC":       {1, parseIsrc},
 	"PERFORMER": {1, parsePerformer},
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
@@ -184,6 +184,24 @@ func parseIndex(params []string, sheet *CueSheet) os.Error {
 
 // parseIsrc parsers ISRC command.
 func parseIsrc(params []string, sheet *CueSheet) os.Error {
+	isrc := params[0]
+
+	track := getCurrentTrack(sheet)
+	if track == nil {
+		return os.NewError("TRACK command should appears before ISRC command")
+	}
+
+	// TODO: Check if we before any INDEX command for this track.
+
+	re := "^[0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z]" +
+		"[0-9][0-9][0-9][0-9][0-9][0-9][0-9]$"
+	matched, _ := regexp.MatchString(re, isrc)
+	if !matched {
+		return fmt.Errorf("%s is not valid ISRC number", isrc)
+	}
+	
+	track.Isrc = isrc
+
 	return nil
 }
 

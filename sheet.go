@@ -83,6 +83,8 @@ type Track struct {
 	Songwriter string
 	// Track decode flags.
 	Flags []TrackFlag
+	// Internetional Standaard Recording Code.
+	Isrc string
 }
 
 // Audio file representation structure.
