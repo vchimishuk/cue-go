@@ -34,7 +34,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
 	"REM": {-1, parseRem},
-	//	"SONGWRITER": parseSongWriter,
+	// "SONGWRITER": {1, parseSongWriter},
 	"TITLE": {1, parseTitle},
 	"TRACK": {2, parseTrack},
 }
@@ -161,18 +161,10 @@ func parseFlags(params []string, sheet *CueSheet) os.Error {
 		return
 	}
 
-	trackNotFound := os.NewError("TRACK command should appears before FLAGS command")
-
-	if len(sheet.Files) == 0 {
-		return trackNotFound
+	track := getCurrentTrack(sheet)
+	if track == nil {
+		return os.NewError("TRACK command should appears before FLAGS command")
 	}
-
-	file := &(sheet.Files[len(sheet.Files)-1])
-	if len(file.Tracks) == 0 {
-		return trackNotFound
-	}
-
-	track := &(file.Tracks[len(file.Tracks)-1])
 
 	for _, flagStr := range params {
 		flag, err := flagParser(flagStr)
@@ -199,17 +191,13 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 func parsePerformer(params []string, sheet *CueSheet) os.Error {
 	// Limit this field length up to 80 characters.
 	performer := stringTruncate(params[0], 80)
-
-	if len(sheet.Files) == 0 {
+	track := getCurrentTrack(sheet)
+	
+	if track == nil {
 		// Performer command for the CD disk.
 		sheet.Performer = performer
 	} else {
 		// Performer command for track.
-		file := &(sheet.Files[len(sheet.Files)-1])
-		if len(file.Tracks) == 0 {
-			return os.NewError("PERFORMER command should appears after a TRACK command")
-		}
-		track := &(file.Tracks[len(file.Tracks)-1])
 		track.Performer = performer
 	}
 
@@ -242,17 +230,13 @@ func parseSongWriter(params []string, sheet *CueSheet) os.Error {
 func parseTitle(params []string, sheet *CueSheet) os.Error {
 	// Limit this field length up to 80 characters.
 	title := stringTruncate(params[0], 80)
+	track := getCurrentTrack(sheet)
 
-	if len(sheet.Files) == 0 {
+	if track == nil {
 		// Title for the CD disk.
 		sheet.Title = title
 	} else {
 		// Title command for track.
-		file := &(sheet.Files[len(sheet.Files)-1])
-		if len(file.Tracks) == 0 {
-			return os.NewError("TITLE command should appears after a TRACK command")
-		}
-		track := &(file.Tracks[len(file.Tracks)-1])
 		track.Title = title
 	}
 
@@ -320,4 +304,29 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 	file.Tracks = append(file.Tracks, *track)
 
 	return nil
+}
+
+// getCurrentFile returns file object started with the last FILE command.
+// Returns nil if there is no any File objects.
+func getCurrentFile(sheet *CueSheet) *File {
+	if len(sheet.Files) == 0 {
+		return nil
+	}
+
+	return &(sheet.Files[len(sheet.Files)-1])
+}
+
+// getCurrentTrack returns current track object, which was started with last TRACK command.
+// Returns nil if there is no any Track object avaliable.
+func getCurrentTrack(sheet *CueSheet) *Track {
+	file := getCurrentFile(sheet)
+	if file == nil {
+		return nil
+	}
+	
+	if len(file.Tracks) == 0 {
+		return nil
+	}
+
+	return &(file.Tracks[len(file.Tracks)-1])
 }
