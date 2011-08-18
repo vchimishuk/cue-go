@@ -28,15 +28,15 @@ var parsersMap = map[string]commandParserDescriptor{
 	"CDTEXTFILE": {1, parseCdTextFile},
 	"FILE":       {2, parseFile},
 	"FLAGS":      {-1, parseFlags},
-	//	"INDEX":      parseIndex,
+	"INDEX":      {2, parseIndex},
 	"ISRC":       {1, parseIsrc},
-	"PERFORMER": {1, parsePerformer},
+	"PERFORMER":  {1, parsePerformer},
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
-	"REM": {-1, parseRem},
+	"REM":        {-1, parseRem},
 	"SONGWRITER": {1, parseSongWriter},
-	"TITLE": {1, parseTitle},
-	"TRACK": {2, parseTrack},
+	"TITLE":      {1, parseTitle},
+	"TRACK":      {2, parseTrack},
 }
 
 // Parse parses cue-sheet data (file) and returns filled CueSheet struct.
@@ -179,6 +179,50 @@ func parseFlags(params []string, sheet *CueSheet) os.Error {
 
 // parseIndex parsers INDEX command.
 func parseIndex(params []string, sheet *CueSheet) os.Error {
+	min, sec, frames, err := parseTime(params[1])
+	if err != nil {
+		return fmt.Errorf("Failed to parse index start time. %s", err.String())
+	}
+
+	number, err := strconv.Atoi(params[0])
+	if err != nil {
+		return fmt.Errorf("Failed to parse index number. %s", err.String())
+	}
+
+	// All index numbers must be between 0 and 99 inclusive.
+	if number < 0 || number > 99 {
+		return os.NewError("Index number should be in 0..99 interval")
+	}
+
+	track := getCurrentTrack(sheet)
+	if track == nil {
+		return fmt.Errorf("TRACK command should appears before INDEX command")
+	}
+
+	// This is the first file index?
+	file := getCurrentFile(sheet)
+	lastIndex := getFileLastIndex(file)
+	if lastIndex == nil {
+		// The first index must be 0 or 1.
+		if number >= 2 {
+			return os.NewError("First file index should has 0 or 1 inxed number")
+		}
+
+		// The first index of a file must start at 00:00:00.
+		if min+sec+frames != 0 {
+			return os.NewError("First file index must start at 00:00:00")
+		}
+	} else {
+		// All other indexes being sequential to the first one.
+		numberExpected := lastIndex.Number + 1
+		if numberExpected != number {
+			return fmt.Errorf("Expected %d index number but %d recieved", numberExpected, number)
+		}
+	}
+
+	index := Index{Number: number, Time: Time{min, sec, frames}}
+	track.Indexes = append(track.Indexes, index)
+
 	return nil
 }
 
@@ -191,7 +235,9 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 		return os.NewError("TRACK command should appears before ISRC command")
 	}
 
-	// TODO: Check if we before any INDEX command for this track.
+	if len(track.Indexes) != 0 {
+		return os.NewError("ISRC command must be specified before INDEX command")
+	}
 
 	re := "^[0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z]" +
 		"[0-9][0-9][0-9][0-9][0-9][0-9][0-9]$"
@@ -199,7 +245,7 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 	if !matched {
 		return fmt.Errorf("%s is not valid ISRC number", isrc)
 	}
-	
+
 	track.Isrc = isrc
 
 	return nil
@@ -210,7 +256,7 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 	// Limit this field length up to 80 characters.
 	performer := stringTruncate(params[0], 80)
 	track := getCurrentTrack(sheet)
-	
+
 	if track == nil {
 		// Performer command for the CD disk.
 		sheet.Performer = performer
@@ -250,7 +296,6 @@ func parseSongWriter(params []string, sheet *CueSheet) os.Error {
 	} else {
 		track.Songwriter = songwriter
 	}
-
 
 	return nil
 }
@@ -320,7 +365,7 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 	track.Number = number
 	track.DataType = dataType
 
-	file := &(sheet.Files[len(sheet.Files)-1])
+	file := &sheet.Files[len(sheet.Files)-1]
 
 	// But all track numbers after the first must be sequential.
 	if len(file.Tracks) > 0 {
@@ -342,7 +387,7 @@ func getCurrentFile(sheet *CueSheet) *File {
 		return nil
 	}
 
-	return &(sheet.Files[len(sheet.Files)-1])
+	return &sheet.Files[len(sheet.Files)-1]
 }
 
 // getCurrentTrack returns current track object, which was started with last TRACK command.
@@ -352,10 +397,24 @@ func getCurrentTrack(sheet *CueSheet) *Track {
 	if file == nil {
 		return nil
 	}
-	
+
 	if len(file.Tracks) == 0 {
 		return nil
 	}
 
-	return &(file.Tracks[len(file.Tracks)-1])
+	return &file.Tracks[len(file.Tracks)-1]
+}
+
+// getFileLastIndex returns last index for the given file.
+// Returns nil if file has no any indexes.
+func getFileLastIndex(file *File) *Index {
+	for i := len(file.Tracks) - 1; i >= 0; i-- {
+		track := &file.Tracks[i]
+
+		for j := len(track.Indexes) - 1; j >= 0; j-- {
+			return &track.Indexes[j]
+		}
+	}
+
+	return nil
 }

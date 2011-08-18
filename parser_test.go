@@ -49,3 +49,34 @@ func TestParseCommand(t *testing.T) {
 		}
 	}
 }
+
+type timeExpected struct {
+	min    int
+	sec    int
+	frames int
+}
+
+func TestParseTime(t *testing.T) {
+	var tests = map[string]timeExpected{
+		"01:02:03": timeExpected{1, 2, 3},
+		"11:22:33": timeExpected{11, 22, 33},
+		"14:00:00": timeExpected{14, 0, 0},
+	}
+
+	for input, expected := range tests {
+		min, sec, frames, err := parseTime(input)
+		if err != nil {
+			t.Fatalf("Time parsing failed. Input string: '%s'. %", input, err.String())
+		}
+
+		if min != expected.min {
+			t.Fatalf("Expected %d minutes, but %d recieved.", expected.min, min)
+		}
+		if sec != expected.sec {
+			t.Fatalf("Expected %d seconds, but %d recieved.", expected.sec, sec)
+		}
+		if frames != expected.frames {
+			t.Fatalf("Expected %d frames, but %d recieved.", expected.frames, frames)
+		}
+	}
+}

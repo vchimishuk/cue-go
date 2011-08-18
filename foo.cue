@@ -11,10 +11,13 @@ FILE "Doro - Doro.ape" WAVE
   TRACK 01 AUDIO
     TITLE "Unholy Love"
     PERFORMER "Doro"
+    INDEX 01 00:00:00
+    INDEX 02 00:01:00
   TRACK 02 AUDIO
     TITLE "I Had Too Much to Dream"
     PERFORMER "Doro"
     FLAGS 4CH PRE DCP SCMS
+    INDEX 03 01:00:00
   TRACK 03 AUDIO
     SONGWRITER "Songwriter for the track"
     ISRC ABCDE1234567

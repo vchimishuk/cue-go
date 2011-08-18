@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"bytes"
 	"strings"
+	"strconv"
 	"unicode"
 )
 
@@ -85,6 +86,44 @@ func parseEscapeSequence(seq string) (char byte, err os.Error) {
 	char, ok := m[seq]
 	if !ok {
 		err = fmt.Errorf("Usupported escape sequence '%s'", seq)
+	}
+
+	return
+}
+
+// parserTime parses time string and returns separate values.
+// Input string format: mm:ss:ff
+func parseTime(length string) (min int, sec int, frames int, err os.Error) {
+	parts := strings.Split(length, ":")
+	if len(parts) != 3 {
+		err = os.NewError("Illegal time format. mm:ss:ff should be.")
+		return
+	}
+
+	min, err = strconv.Atoi(parts[0])
+	if err != nil {
+		err = os.NewError("Failed to parse minutes. " + err.String())
+		return
+	}
+
+	sec, err = strconv.Atoi(parts[1])
+	if err != nil {
+		err = os.NewError("Failed to parse seconds. " + err.String())
+		return
+	}
+	if sec > 59 {
+		err = os.NewError("Failed to parse seconds. Seconds value can't be more than 59.")
+		return
+	}
+
+	frames, err = strconv.Atoi(parts[2])
+	if err != nil {
+		err = os.NewError("Failed to parse frames value. " + err.String())
+		return
+	}
+	if frames > 74 {
+		err = os.NewError("Failed to parse frames. Frames value can't be more than 74.")
+		return
 	}
 
 	return

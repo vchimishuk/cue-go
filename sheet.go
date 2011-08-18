@@ -56,6 +56,29 @@ const (
 	DataTypeCdi_2352
 )
 
+// Time point description type.
+type Time struct {
+	// Minutes.
+	Min int
+	// Minutes.
+	Sec int
+	// Frames.
+	Frames int
+}
+
+// Seconds returns length in seconds.
+func (time *Time) Seconds() int {
+	return time.Min*60 + time.Sec
+}
+
+// Track index type
+type Index struct {
+	// Index number.
+	Number int
+	// Index starting time.
+	Time Time
+}
+
 // Additional decode information about track.
 type TrackFlag int
 
@@ -85,6 +108,8 @@ type Track struct {
 	Flags []TrackFlag
 	// Internetional Standaard Recording Code.
 	Isrc string
+	// Track indexes.
+	Indexes []Index
 }
 
 // Audio file representation structure.
