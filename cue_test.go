@@ -7,7 +7,7 @@ import (
 )
 
 func TestPackage(t *testing.T) {
-	filename := "foo.cue"
+	filename := "test.cue"
 
 	file, err := os.Open(filename)
 	if err != nil {

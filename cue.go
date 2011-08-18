@@ -199,22 +199,22 @@ func parseIndex(params []string, sheet *CueSheet) os.Error {
 		return fmt.Errorf("TRACK command should appears before INDEX command")
 	}
 
-	// This is the first file index?
-	file := getCurrentFile(sheet)
-	lastIndex := getFileLastIndex(file)
-	if lastIndex == nil {
+	// The first index of a file must start at 00:00:00.
+	if getFileLastIndex(getCurrentFile(sheet)) == nil {
+		if min+sec+frames != 0 {
+			return os.NewError("First track index must start at 00:00:00")
+		}
+	}
+
+	// This is the first track index?
+	if len(track.Indexes) == 0 {
 		// The first index must be 0 or 1.
 		if number >= 2 {
-			return os.NewError("First file index should has 0 or 1 inxed number")
-		}
-
-		// The first index of a file must start at 00:00:00.
-		if min+sec+frames != 0 {
-			return os.NewError("First file index must start at 00:00:00")
+			return os.NewError("First track index should has 0 or 1 inxed number")
 		}
 	} else {
 		// All other indexes being sequential to the first one.
-		numberExpected := lastIndex.Number + 1
+		numberExpected := track.Indexes[len(track.Indexes) - 1].Number + 1
 		if numberExpected != number {
 			return fmt.Errorf("Expected %d index number but %d recieved", numberExpected, number)
 		}
