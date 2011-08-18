@@ -8,6 +8,8 @@ type CueSheet struct {
 	Performer string
 	// Specify a title for a CD-TEXT enhanced disc.
 	Title string
+	// Specify songwriter for disc.
+	Songwriter string
 	// Comments in the CUE SHEET file.
 	Comments []string
 	// Name of the file that contains the encoded CD-TEXT information for the disc.
@@ -77,6 +79,8 @@ type Track struct {
 	Title string
 	// Track preformer.
 	Performer string
+	// Songwriter.
+	Songwriter string
 	// Track decode flags.
 	Flags []TrackFlag
 }

@@ -6,6 +6,7 @@ CATALOG 1234567890123
 CDTEXTFILE FILENAME.CDT
 PERFORMER "Doro"
 TITLE "Doro"
+SONGWRITER "Songwriter for the disc"
 FILE "Doro - Doro.ape" WAVE
   TRACK 01 AUDIO
     TITLE "Unholy Love"
@@ -14,3 +15,5 @@ FILE "Doro - Doro.ape" WAVE
     TITLE "I Had Too Much to Dream"
     PERFORMER "Doro"
     FLAGS 4CH PRE DCP SCMS
+  TRACK 03 AUDIO
+    SONGWRITER "Songwriter for the track"

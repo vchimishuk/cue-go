@@ -34,7 +34,7 @@ var parsersMap = map[string]commandParserDescriptor{
 	//	"POSTGAP":    parsePostgap,
 	//	"PREGAP":     parsePregap,
 	"REM": {-1, parseRem},
-	// "SONGWRITER": {1, parseSongWriter},
+	"SONGWRITER": {1, parseSongWriter},
 	"TITLE": {1, parseTitle},
 	"TRACK": {2, parseTrack},
 }
@@ -223,6 +223,17 @@ func parseRem(params []string, sheet *CueSheet) os.Error {
 
 // parseSongWriter parsers SONGWRITER command.
 func parseSongWriter(params []string, sheet *CueSheet) os.Error {
+	// Limit this field length up to 80 characters.
+	songwriter := stringTruncate(params[0], 80)
+	track := getCurrentTrack(sheet)
+
+	if track == nil {
+		sheet.Songwriter = songwriter
+	} else {
+		track.Songwriter = songwriter
+	}
+
+
 	return nil
 }
 
