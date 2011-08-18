@@ -31,8 +31,8 @@ var parsersMap = map[string]commandParserDescriptor{
 	"INDEX":      {2, parseIndex},
 	"ISRC":       {1, parseIsrc},
 	"PERFORMER":  {1, parsePerformer},
-	//	"POSTGAP":    parsePostgap,
-	//	"PREGAP":     parsePregap,
+	"POSTGAP":    {1, parsePostgap},
+	"PREGAP":     {1, parsePregap},
 	"REM":        {-1, parseRem},
 	"SONGWRITER": {1, parseSongWriter},
 	"TITLE":      {1, parseTitle},
@@ -270,11 +270,39 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 
 // parsePostgap parsers POSTGAP command.
 func parsePostgap(params []string, sheet *CueSheet) os.Error {
+	track := getCurrentTrack(sheet)
+	if track == nil {
+		return os.NewError("POSTGAP command must appear after a TRACK command")
+	}
+
+	min, sec, frames, err := parseTime(params[0])
+	if err != nil {
+		return fmt.Errorf("Failed to parse postgap time. %s", err.String())
+	}
+
+	track.Postgap = Time{min, sec, frames}
+
 	return nil
 }
 
 // parsePregap parsers PREGAP command.
 func parsePregap(params []string, sheet *CueSheet) os.Error {
+	track := getCurrentTrack(sheet)
+	if track == nil {
+		return os.NewError("PREGAP command must appear after a TRACK command")
+	}
+
+	if len(track.Indexes) != 0 {
+		return os.NewError("PREGAP command must appear before any INDEX command")
+	}
+
+	min, sec, frames, err := parseTime(params[0])
+	if err != nil {
+		return fmt.Errorf("Failed to parse pregap time. %s", err.String())
+	}
+
+	track.Pregap = Time{min, sec, frames}
+
 	return nil
 }
 

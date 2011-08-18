@@ -21,3 +21,7 @@ FILE "Doro - Doro.ape" WAVE
   TRACK 03 AUDIO
     SONGWRITER "Songwriter for the track"
     ISRC ABCDE1234567
+    PREGAP 00:02:00
+    INDEX 04 01:50:00
+    POSTGAP 00:02:00
+

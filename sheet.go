@@ -110,6 +110,10 @@ type Track struct {
 	Isrc string
 	// Track indexes.
 	Indexes []Index
+	// Length of the track pregap.
+	Pregap Time
+	// Length of the track postgap.
+	Postgap Time
 }
 
 // Audio file representation structure.
