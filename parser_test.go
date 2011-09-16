@@ -19,13 +19,15 @@ func TestParseCommand(t *testing.T) {
 		{"COMMAND",
 			expected{"COMMAND",
 				[]string{}}},
-
 		{"COMMAND \t PARAM1   PARAM2\tPARAM3",
 			expected{"COMMAND",
 				[]string{"PARAM1", "PARAM2", "PARAM3"}}},
-		{"COMMAND 'P A R A M 1' \"PA RA M2\" PA\"RAM'3",
+		{"COMMAND 'PARAM1' \"PARAM2\" 'PAR\"AM3' 'P AR  AM 4'",
 			expected{"COMMAND",
-				[]string{"P A R A M 1", "PA RA M2", "PARAM3"}}},
+				[]string{"PARAM1", "PARAM2", "PAR\"AM3", "P AR  AM 4"}}},
+		{"COMMAND 'P A R A M 1' \"PA RA M2\" PA\\\"RAM\\'3",
+			expected{"COMMAND",
+				[]string{"P A R A M 1", "PA RA M2", "PA\"RAM'3"}}},
 	}
 
 	for _, tt := range tests {

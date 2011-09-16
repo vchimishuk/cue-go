@@ -1,8 +1,3 @@
-// TODO: Bug. Parameter can start quoted with one char and closed with another.
-//       For instance: 'PARAM" or "PARAM'
-//
-// TODO: Quote chars (", ') are ignored/processed_wrong if they are appears
-//       in the middle of the word. For instance: "PA'RAM", P'AR"AM
 package cue
 
 import (
@@ -33,37 +28,65 @@ func parseCommand(line string) (cmd string, params []string, err os.Error) {
 
 	// Split parameters.
 	l := len(line)
-	quoted := false
+	var quotedChar byte = 0
 	param := bytes.NewBufferString("")
 	for i = 0; i < l; i++ {
 		c := line[i]
 
-		if !quoted && unicode.IsSpace(int(c)) { // Start new parameter.
-			params = append(params, param.String())
-			param = bytes.NewBufferString("")
-
-			// Jump over any spaces.
-			for ; i+1 < l && unicode.IsSpace(int(line[i+1])); i++ {
-
+		if quotedChar == 0 { // We are not in quote mode now, so we can enter into.
+			if isQuoteChar(c) {
+				// Quote can be started only at the beginnig of the parameter,
+				// but not in the middle.
+				if param.Len() != 0 {
+					err = os.NewError("Unexpected quortation character.")
+					return
+				}
+				quotedChar = c
+			} else if unicode.IsSpace(int(c)) {
+				// In not quote mode space starts new parameter.
+				// But don't save empty parameters.
+				if (param.Len() != 0) {
+					params = append(params, param.String())
+					param = bytes.NewBufferString("")
+				}
+			} else {
+				if c == '\\' { // Escape sequence in the text.
+					if i+1 >= l {
+						err = fmt.Errorf("Unfinished escape sequence")
+						return
+					}
+					
+					s, e := parseEscapeSequence(line[i : i+2])
+					if e != nil {
+						err = e
+						return
+					}
+					param.WriteByte(s)
+					i++
+				} else {
+					param.WriteByte(c)
+				}
 			}
 		} else {
-			if c == '\\' { // Escape sequence in the text.
-				if i+1 >= l {
-					err = fmt.Errorf("Unfinished escape sequence")
-					return
-				}
-
-				s, e := parseEscapeSequence(line[i : i+2])
-				if e != nil {
-					err = e
-					return
-				}
-				param.WriteByte(s)
-				i++
-			} else if c == '\'' || c == '"' { // Start/end quoted parameter.
-				quoted = !quoted
+			if c == quotedChar { // Close quote.
+				quotedChar = 0
 			} else {
-				param.WriteByte(c)
+				if c == '\\' { // Escape sequence in the text.
+					if i+1 >= l {
+						err = fmt.Errorf("Unfinished escape sequence")
+						return
+					}
+					
+					s, e := parseEscapeSequence(line[i : i+2])
+					if e != nil {
+						err = e
+						return
+					}
+					param.WriteByte(s)
+					i++
+				} else {
+					param.WriteByte(c)
+				}
 			}
 		}
 	}
@@ -89,6 +112,12 @@ func parseEscapeSequence(seq string) (char byte, err os.Error) {
 	}
 
 	return
+}
+
+// isQuoteChar returns true if given char is string quoted char:
+// " or '.
+func isQuoteChar(char byte) bool {
+	return char == '\'' || char == '"'
 }
 
 // parserTime parses time string and returns separate values.
