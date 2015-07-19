@@ -61,7 +61,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err error) {
 
 		cmd, params, err := parseCommand(line)
 		if err != nil {
-			return nil, fmt.Errorf("Line %d. %s", err.String())
+			return nil, fmt.Errorf("Line %d. %s", err.Error())
 		}
 
 		lineNumber++
@@ -80,7 +80,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err error) {
 
 		err = parserDescriptor.parser(params, sheet)
 		if err != nil {
-			return nil, fmt.Errorf("Line %d. Failed to parse %s command. %s", lineNumber, cmd, err.String())
+			return nil, fmt.Errorf("Line %d. Failed to parse %s command. %s", lineNumber, cmd, err.Error())
 		}
 	}
 
@@ -182,12 +182,12 @@ func parseFlags(params []string, sheet *CueSheet) error {
 func parseIndex(params []string, sheet *CueSheet) error {
 	min, sec, frames, err := parseTime(params[1])
 	if err != nil {
-		return fmt.Errorf("Failed to parse index start time. %s", err.String())
+		return fmt.Errorf("Failed to parse index start time. %s", err.Error())
 	}
 
 	number, err := strconv.Atoi(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse index number. %s", err.String())
+		return fmt.Errorf("Failed to parse index number. %s", err.Error())
 	}
 
 	// All index numbers must be between 0 and 99 inclusive.
@@ -278,7 +278,7 @@ func parsePostgap(params []string, sheet *CueSheet) error {
 
 	min, sec, frames, err := parseTime(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse postgap time. %s", err.String())
+		return fmt.Errorf("Failed to parse postgap time. %s", err.Error())
 	}
 
 	track.Postgap = Time{min, sec, frames}
@@ -299,7 +299,7 @@ func parsePregap(params []string, sheet *CueSheet) error {
 
 	min, sec, frames, err := parseTime(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse pregap time. %s", err.String())
+		return fmt.Errorf("Failed to parse pregap time. %s", err.Error())
 	}
 
 	track.Pregap = Time{min, sec, frames}
@@ -379,7 +379,7 @@ func parseTrack(params []string, sheet *CueSheet) error {
 
 	number, err := strconv.Atoi(numberStr)
 	if err != nil {
-		return fmt.Errorf("Failed to parse track number parameter. %s", err.String())
+		return fmt.Errorf("Failed to parse track number parameter. %s", err.Error())
 	}
 	if number < 1 {
 		return fmt.Errorf("Failed to parse track number parameter. Value should be in 1..99 range.")

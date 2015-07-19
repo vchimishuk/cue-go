@@ -132,13 +132,13 @@ func parseTime(length string) (min int, sec int, frames int, err error) {
 
 	min, err = strconv.Atoi(parts[0])
 	if err != nil {
-		err = errors.New("Failed to parse minutes. " + err.String())
+		err = errors.New("Failed to parse minutes. " + err.Error())
 		return
 	}
 
 	sec, err = strconv.Atoi(parts[1])
 	if err != nil {
-		err = errors.New("Failed to parse seconds. " + err.String())
+		err = errors.New("Failed to parse seconds. " + err.Error())
 		return
 	}
 	if sec > 59 {
@@ -148,7 +148,7 @@ func parseTime(length string) (min int, sec int, frames int, err error) {
 
 	frames, err = strconv.Atoi(parts[2])
 	if err != nil {
-		err = errors.New("Failed to parse frames value. " + err.String())
+		err = errors.New("Failed to parse frames value. " + err.Error())
 		return
 	}
 	if frames > 74 {
