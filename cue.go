@@ -4,6 +4,7 @@ package cue
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -163,7 +164,7 @@ func parseFlags(params []string, sheet *CueSheet) error {
 
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("TRACK command should appears before FLAGS command")
+		return errors.New("TRACK command should appears before FLAGS command")
 	}
 
 	for _, flagStr := range params {
@@ -191,7 +192,7 @@ func parseIndex(params []string, sheet *CueSheet) error {
 
 	// All index numbers must be between 0 and 99 inclusive.
 	if number < 0 || number > 99 {
-		return os.NewError("Index number should be in 0..99 interval")
+		return errors.New("Index number should be in 0..99 interval")
 	}
 
 	track := getCurrentTrack(sheet)
@@ -202,7 +203,7 @@ func parseIndex(params []string, sheet *CueSheet) error {
 	// The first index of a file must start at 00:00:00.
 	if getFileLastIndex(getCurrentFile(sheet)) == nil {
 		if min+sec+frames != 0 {
-			return os.NewError("First track index must start at 00:00:00")
+			return errors.New("First track index must start at 00:00:00")
 		}
 	}
 
@@ -210,7 +211,7 @@ func parseIndex(params []string, sheet *CueSheet) error {
 	if len(track.Indexes) == 0 {
 		// The first index must be 0 or 1.
 		if number >= 2 {
-			return os.NewError("First track index should has 0 or 1 inxed number")
+			return errors.New("First track index should has 0 or 1 inxed number")
 		}
 	} else {
 		// All other indexes being sequential to the first one.
@@ -232,11 +233,11 @@ func parseIsrc(params []string, sheet *CueSheet) error {
 
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("TRACK command should appears before ISRC command")
+		return errors.New("TRACK command should appears before ISRC command")
 	}
 
 	if len(track.Indexes) != 0 {
-		return os.NewError("ISRC command must be specified before INDEX command")
+		return errors.New("ISRC command must be specified before INDEX command")
 	}
 
 	re := "^[0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z]" +
@@ -272,7 +273,7 @@ func parsePerformer(params []string, sheet *CueSheet) error {
 func parsePostgap(params []string, sheet *CueSheet) error {
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("POSTGAP command must appear after a TRACK command")
+		return errors.New("POSTGAP command must appear after a TRACK command")
 	}
 
 	min, sec, frames, err := parseTime(params[0])
@@ -289,11 +290,11 @@ func parsePostgap(params []string, sheet *CueSheet) error {
 func parsePregap(params []string, sheet *CueSheet) error {
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("PREGAP command must appear after a TRACK command")
+		return errors.New("PREGAP command must appear after a TRACK command")
 	}
 
 	if len(track.Indexes) != 0 {
-		return os.NewError("PREGAP command must appear before any INDEX command")
+		return errors.New("PREGAP command must appear before any INDEX command")
 	}
 
 	min, sec, frames, err := parseTime(params[0])

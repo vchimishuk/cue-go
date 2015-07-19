@@ -2,6 +2,7 @@ package cue
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -38,7 +39,7 @@ func parseCommand(line string) (cmd string, params []string, err error) {
 				// Quote can be started only at the beginnig of the parameter,
 				// but not in the middle.
 				if param.Len() != 0 {
-					err = os.NewError("Unexpected quortation character.")
+					err = errors.New("Unexpected quortation character.")
 					return
 				}
 				quotedChar = c
@@ -125,33 +126,33 @@ func isQuoteChar(char byte) bool {
 func parseTime(length string) (min int, sec int, frames int, err error) {
 	parts := strings.Split(length, ":")
 	if len(parts) != 3 {
-		err = os.NewError("Illegal time format. mm:ss:ff should be.")
+		err = errors.New("Illegal time format. mm:ss:ff should be.")
 		return
 	}
 
 	min, err = strconv.Atoi(parts[0])
 	if err != nil {
-		err = os.NewError("Failed to parse minutes. " + err.String())
+		err = errors.New("Failed to parse minutes. " + err.String())
 		return
 	}
 
 	sec, err = strconv.Atoi(parts[1])
 	if err != nil {
-		err = os.NewError("Failed to parse seconds. " + err.String())
+		err = errors.New("Failed to parse seconds. " + err.String())
 		return
 	}
 	if sec > 59 {
-		err = os.NewError("Failed to parse seconds. Seconds value can't be more than 59.")
+		err = errors.New("Failed to parse seconds. Seconds value can't be more than 59.")
 		return
 	}
 
 	frames, err = strconv.Atoi(parts[2])
 	if err != nil {
-		err = os.NewError("Failed to parse frames value. " + err.String())
+		err = errors.New("Failed to parse frames value. " + err.String())
 		return
 	}
 	if frames > 74 {
-		err = os.NewError("Failed to parse frames. Frames value can't be more than 74.")
+		err = errors.New("Failed to parse frames. Frames value can't be more than 74.")
 		return
 	}
 
