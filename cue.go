@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -47,7 +46,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err error) {
 	rd := bufio.NewReader(reader)
 	lineNumber := 0
 
-	for buf, _, err := rd.ReadLine(); err != os.EOF; buf, _, err = rd.ReadLine() {
+	for buf, _, err := rd.ReadLine(); err != io.EOF; buf, _, err = rd.ReadLine() {
 		if err != nil {
 			return nil, err
 		}
