@@ -42,7 +42,7 @@ func parseCommand(line string) (cmd string, params []string, err error) {
 					return
 				}
 				quotedChar = c
-			} else if unicode.IsSpace(int(c)) {
+			} else if unicode.IsSpace(rune(c)) {
 				// In not quote mode space starts new parameter.
 				// But don't save empty parameters.
 				if param.Len() != 0 {
