@@ -33,7 +33,7 @@ func TestParseCommand(t *testing.T) {
 	for _, tt := range tests {
 		cmd, params, err := parseCommand(tt.Input)
 		if err != nil {
-			t.Fatalf(err.String())
+			t.Fatalf(err.Error())
 		}
 
 		if cmd != tt.Etalon.Cmd {
@@ -68,7 +68,7 @@ func TestParseTime(t *testing.T) {
 	for input, expected := range tests {
 		min, sec, frames, err := parseTime(input)
 		if err != nil {
-			t.Fatalf("Time parsing failed. Input string: '%s'. %", input, err.String())
+			t.Fatalf("Time parsing failed. Input string: '%s'. %", input, err.Error())
 		}
 
 		if min != expected.min {

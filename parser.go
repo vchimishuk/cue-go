@@ -1,11 +1,11 @@
 package cue
 
 import (
-	"os"
-	"fmt"
 	"bytes"
-	"strings"
+	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -13,7 +13,7 @@ import (
 // * first word in the line is command name (cmd return value)
 // * all rest words are command's parameters
 // * if parameter includes more than one word it should be wrapped with ' or "
-func parseCommand(line string) (cmd string, params []string, err os.Error) {
+func parseCommand(line string) (cmd string, params []string, err error) {
 	line = strings.TrimSpace(line)
 	params = make([]string, 0)
 
@@ -38,14 +38,14 @@ func parseCommand(line string) (cmd string, params []string, err os.Error) {
 				// Quote can be started only at the beginnig of the parameter,
 				// but not in the middle.
 				if param.Len() != 0 {
-					err = os.NewError("Unexpected quortation character.")
+					err = errors.New("Unexpected quortation character.")
 					return
 				}
 				quotedChar = c
-			} else if unicode.IsSpace(int(c)) {
+			} else if unicode.IsSpace(rune(c)) {
 				// In not quote mode space starts new parameter.
 				// But don't save empty parameters.
-				if (param.Len() != 0) {
+				if param.Len() != 0 {
 					params = append(params, param.String())
 					param = bytes.NewBufferString("")
 				}
@@ -55,7 +55,7 @@ func parseCommand(line string) (cmd string, params []string, err os.Error) {
 						err = fmt.Errorf("Unfinished escape sequence")
 						return
 					}
-					
+
 					s, e := parseEscapeSequence(line[i : i+2])
 					if e != nil {
 						err = e
@@ -76,7 +76,7 @@ func parseCommand(line string) (cmd string, params []string, err os.Error) {
 						err = fmt.Errorf("Unfinished escape sequence")
 						return
 					}
-					
+
 					s, e := parseEscapeSequence(line[i : i+2])
 					if e != nil {
 						err = e
@@ -97,7 +97,7 @@ func parseCommand(line string) (cmd string, params []string, err os.Error) {
 }
 
 // parseEscapeSequence returns escape character by it's string "source code" equivalent.
-func parseEscapeSequence(seq string) (char byte, err os.Error) {
+func parseEscapeSequence(seq string) (char byte, err error) {
 	var m = map[string]byte{
 		"\\\"": '"',
 		"\\'":  '\'',
@@ -122,36 +122,36 @@ func isQuoteChar(char byte) bool {
 
 // parserTime parses time string and returns separate values.
 // Input string format: mm:ss:ff
-func parseTime(length string) (min int, sec int, frames int, err os.Error) {
+func parseTime(length string) (min int, sec int, frames int, err error) {
 	parts := strings.Split(length, ":")
 	if len(parts) != 3 {
-		err = os.NewError("Illegal time format. mm:ss:ff should be.")
+		err = errors.New("Illegal time format. mm:ss:ff should be.")
 		return
 	}
 
 	min, err = strconv.Atoi(parts[0])
 	if err != nil {
-		err = os.NewError("Failed to parse minutes. " + err.String())
+		err = errors.New("Failed to parse minutes. " + err.Error())
 		return
 	}
 
 	sec, err = strconv.Atoi(parts[1])
 	if err != nil {
-		err = os.NewError("Failed to parse seconds. " + err.String())
+		err = errors.New("Failed to parse seconds. " + err.Error())
 		return
 	}
 	if sec > 59 {
-		err = os.NewError("Failed to parse seconds. Seconds value can't be more than 59.")
+		err = errors.New("Failed to parse seconds. Seconds value can't be more than 59.")
 		return
 	}
 
 	frames, err = strconv.Atoi(parts[2])
 	if err != nil {
-		err = os.NewError("Failed to parse frames value. " + err.String())
+		err = errors.New("Failed to parse frames value. " + err.Error())
 		return
 	}
 	if frames > 74 {
-		err = os.NewError("Failed to parse frames. Frames value can't be more than 74.")
+		err = errors.New("Failed to parse frames. Frames value can't be more than 74.")
 		return
 	}
 

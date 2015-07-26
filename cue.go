@@ -3,17 +3,17 @@
 package cue
 
 import (
-	"io"
 	"bufio"
+	"errors"
 	"fmt"
-	"os"
+	"io"
 	"regexp"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // commandParser is the function for parsing one command.
-type commandParser func(params []string, sheet *CueSheet) os.Error
+type commandParser func(params []string, sheet *CueSheet) error
 
 // commandParserDesctiptor describes command parser.
 type commandParserDescriptor struct {
@@ -40,13 +40,13 @@ var parsersMap = map[string]commandParserDescriptor{
 }
 
 // Parse parses cue-sheet data (file) and returns filled CueSheet struct.
-func Parse(reader io.Reader) (sheet *CueSheet, err os.Error) {
+func Parse(reader io.Reader) (sheet *CueSheet, err error) {
 	sheet = new(CueSheet)
 
 	rd := bufio.NewReader(reader)
 	lineNumber := 0
 
-	for buf, _, err := rd.ReadLine(); err != os.EOF; buf, _, err = rd.ReadLine() {
+	for buf, _, err := rd.ReadLine(); err != io.EOF; buf, _, err = rd.ReadLine() {
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err os.Error) {
 
 		cmd, params, err := parseCommand(line)
 		if err != nil {
-			return nil, fmt.Errorf("Line %d. %s", err.String())
+			return nil, fmt.Errorf("Line %d. %s", err.Error())
 		}
 
 		lineNumber++
@@ -79,7 +79,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err os.Error) {
 
 		err = parserDescriptor.parser(params, sheet)
 		if err != nil {
-			return nil, fmt.Errorf("Line %d. Failed to parse %s command. %s", lineNumber, cmd, err.String())
+			return nil, fmt.Errorf("Line %d. Failed to parse %s command. %s", lineNumber, cmd, err.Error())
 		}
 	}
 
@@ -87,7 +87,7 @@ func Parse(reader io.Reader) (sheet *CueSheet, err os.Error) {
 }
 
 // parseCatalog parsers CATALOG command.
-func parseCatalog(params []string, sheet *CueSheet) os.Error {
+func parseCatalog(params []string, sheet *CueSheet) error {
 	num := params[0]
 
 	matched, _ := regexp.MatchString("^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]$", num)
@@ -101,7 +101,7 @@ func parseCatalog(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseCdTextFile parsers CDTEXTFILE command.
-func parseCdTextFile(params []string, sheet *CueSheet) os.Error {
+func parseCdTextFile(params []string, sheet *CueSheet) error {
 	sheet.CdTextFile = params[0]
 
 	return nil
@@ -110,9 +110,9 @@ func parseCdTextFile(params []string, sheet *CueSheet) os.Error {
 // parseFile parsers FILE command.
 // params[0] -- fileName
 // params[1] -- fileType
-func parseFile(params []string, sheet *CueSheet) os.Error {
+func parseFile(params []string, sheet *CueSheet) error {
 	// Type parser function.
-	parseFileType := func(t string) (fileType FileType, err os.Error) {
+	parseFileType := func(t string) (fileType FileType, err error) {
 		var types = map[string]FileType{
 			"BINARY":   FileTypeBinary,
 			"MOTOROLA": FileTypeMotorola,
@@ -144,8 +144,8 @@ func parseFile(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseFlags parsers FLAGS command.
-func parseFlags(params []string, sheet *CueSheet) os.Error {
-	flagParser := func(flag string) (trackFlag TrackFlag, err os.Error) {
+func parseFlags(params []string, sheet *CueSheet) error {
+	flagParser := func(flag string) (trackFlag TrackFlag, err error) {
 		var flags = map[string]TrackFlag{
 			"DCP":  TrackFlagDcp,
 			"4CH":  TrackFlag4ch,
@@ -163,7 +163,7 @@ func parseFlags(params []string, sheet *CueSheet) os.Error {
 
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("TRACK command should appears before FLAGS command")
+		return errors.New("TRACK command should appears before FLAGS command")
 	}
 
 	for _, flagStr := range params {
@@ -178,20 +178,20 @@ func parseFlags(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseIndex parsers INDEX command.
-func parseIndex(params []string, sheet *CueSheet) os.Error {
+func parseIndex(params []string, sheet *CueSheet) error {
 	min, sec, frames, err := parseTime(params[1])
 	if err != nil {
-		return fmt.Errorf("Failed to parse index start time. %s", err.String())
+		return fmt.Errorf("Failed to parse index start time. %s", err.Error())
 	}
 
 	number, err := strconv.Atoi(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse index number. %s", err.String())
+		return fmt.Errorf("Failed to parse index number. %s", err.Error())
 	}
 
 	// All index numbers must be between 0 and 99 inclusive.
 	if number < 0 || number > 99 {
-		return os.NewError("Index number should be in 0..99 interval")
+		return errors.New("Index number should be in 0..99 interval")
 	}
 
 	track := getCurrentTrack(sheet)
@@ -202,7 +202,7 @@ func parseIndex(params []string, sheet *CueSheet) os.Error {
 	// The first index of a file must start at 00:00:00.
 	if getFileLastIndex(getCurrentFile(sheet)) == nil {
 		if min+sec+frames != 0 {
-			return os.NewError("First track index must start at 00:00:00")
+			return errors.New("First track index must start at 00:00:00")
 		}
 	}
 
@@ -210,11 +210,11 @@ func parseIndex(params []string, sheet *CueSheet) os.Error {
 	if len(track.Indexes) == 0 {
 		// The first index must be 0 or 1.
 		if number >= 2 {
-			return os.NewError("First track index should has 0 or 1 inxed number")
+			return errors.New("First track index should has 0 or 1 inxed number")
 		}
 	} else {
 		// All other indexes being sequential to the first one.
-		numberExpected := track.Indexes[len(track.Indexes) - 1].Number + 1
+		numberExpected := track.Indexes[len(track.Indexes)-1].Number + 1
 		if numberExpected != number {
 			return fmt.Errorf("Expected %d index number but %d recieved", numberExpected, number)
 		}
@@ -227,16 +227,16 @@ func parseIndex(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseIsrc parsers ISRC command.
-func parseIsrc(params []string, sheet *CueSheet) os.Error {
+func parseIsrc(params []string, sheet *CueSheet) error {
 	isrc := params[0]
 
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("TRACK command should appears before ISRC command")
+		return errors.New("TRACK command should appears before ISRC command")
 	}
 
 	if len(track.Indexes) != 0 {
-		return os.NewError("ISRC command must be specified before INDEX command")
+		return errors.New("ISRC command must be specified before INDEX command")
 	}
 
 	re := "^[0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z][0-9a-zA-z]" +
@@ -252,7 +252,7 @@ func parseIsrc(params []string, sheet *CueSheet) os.Error {
 }
 
 // parsePerformer parsers PERFORMER command.
-func parsePerformer(params []string, sheet *CueSheet) os.Error {
+func parsePerformer(params []string, sheet *CueSheet) error {
 	// Limit this field length up to 80 characters.
 	performer := stringTruncate(params[0], 80)
 	track := getCurrentTrack(sheet)
@@ -269,15 +269,15 @@ func parsePerformer(params []string, sheet *CueSheet) os.Error {
 }
 
 // parsePostgap parsers POSTGAP command.
-func parsePostgap(params []string, sheet *CueSheet) os.Error {
+func parsePostgap(params []string, sheet *CueSheet) error {
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("POSTGAP command must appear after a TRACK command")
+		return errors.New("POSTGAP command must appear after a TRACK command")
 	}
 
 	min, sec, frames, err := parseTime(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse postgap time. %s", err.String())
+		return fmt.Errorf("Failed to parse postgap time. %s", err.Error())
 	}
 
 	track.Postgap = Time{min, sec, frames}
@@ -286,19 +286,19 @@ func parsePostgap(params []string, sheet *CueSheet) os.Error {
 }
 
 // parsePregap parsers PREGAP command.
-func parsePregap(params []string, sheet *CueSheet) os.Error {
+func parsePregap(params []string, sheet *CueSheet) error {
 	track := getCurrentTrack(sheet)
 	if track == nil {
-		return os.NewError("PREGAP command must appear after a TRACK command")
+		return errors.New("PREGAP command must appear after a TRACK command")
 	}
 
 	if len(track.Indexes) != 0 {
-		return os.NewError("PREGAP command must appear before any INDEX command")
+		return errors.New("PREGAP command must appear before any INDEX command")
 	}
 
 	min, sec, frames, err := parseTime(params[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse pregap time. %s", err.String())
+		return fmt.Errorf("Failed to parse pregap time. %s", err.Error())
 	}
 
 	track.Pregap = Time{min, sec, frames}
@@ -307,14 +307,14 @@ func parsePregap(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseRem parsers REM command.
-func parseRem(params []string, sheet *CueSheet) os.Error {
+func parseRem(params []string, sheet *CueSheet) error {
 	sheet.Comments = append(sheet.Comments, strings.Join(params, " "))
 
 	return nil
 }
 
 // parseSongWriter parsers SONGWRITER command.
-func parseSongWriter(params []string, sheet *CueSheet) os.Error {
+func parseSongWriter(params []string, sheet *CueSheet) error {
 	// Limit this field length up to 80 characters.
 	songwriter := stringTruncate(params[0], 80)
 	track := getCurrentTrack(sheet)
@@ -329,7 +329,7 @@ func parseSongWriter(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseTitle parsers TITLE command.
-func parseTitle(params []string, sheet *CueSheet) os.Error {
+func parseTitle(params []string, sheet *CueSheet) error {
 	// Limit this field length up to 80 characters.
 	title := stringTruncate(params[0], 80)
 	track := getCurrentTrack(sheet)
@@ -346,7 +346,7 @@ func parseTitle(params []string, sheet *CueSheet) os.Error {
 }
 
 // parseTrack parses TRACK command.
-func parseTrack(params []string, sheet *CueSheet) os.Error {
+func parseTrack(params []string, sheet *CueSheet) error {
 	// TRACK command should be after FILE command.
 	if len(sheet.Files) == 0 {
 		return fmt.Errorf("Unexpected TRACK command. FILE command expected first.")
@@ -356,7 +356,7 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 	dataTypeStr := params[1]
 
 	// Type parser function.
-	parseDataType := func(t string) (dataType TrackDataType, err os.Error) {
+	parseDataType := func(t string) (dataType TrackDataType, err error) {
 		var types = map[string]TrackDataType{
 			"AUDIO":      DataTypeAudio,
 			"CDG":        DataTypeCdg,
@@ -378,7 +378,7 @@ func parseTrack(params []string, sheet *CueSheet) os.Error {
 
 	number, err := strconv.Atoi(numberStr)
 	if err != nil {
-		return fmt.Errorf("Failed to parse track number parameter. %s", err.String())
+		return fmt.Errorf("Failed to parse track number parameter. %s", err.Error())
 	}
 	if number < 1 {
 		return fmt.Errorf("Failed to parse track number parameter. Value should be in 1..99 range.")
